@@ -20,8 +20,8 @@ public class DataInitializer {
             Role supervisor = roleRepository.findByName("SUPERVISOR")
                     .orElseGet(() -> roleRepository.save(new Role("SUPERVISOR")));
 
-            Role technician = roleRepository.findByName("TECHNICIAN")
-                    .orElseGet(() -> roleRepository.save(new Role("TECHNICIAN")));
+            Role technician = roleRepository.findByName("TECNICO")
+                    .orElseGet(() -> roleRepository.save(new Role("TECNICO")));
 
             if (userRepository.findByUsername("admin").isEmpty()) {
                 User u = new User();

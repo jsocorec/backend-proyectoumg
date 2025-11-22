@@ -1,31 +1,56 @@
 package com.visitas.auth.util;
 
-import javax.activation.DataHandler;
-import javax.activation.DataSource;
-import javax.mail.*;
-import javax.mail.internet.*;
-import javax.mail.util.ByteArrayDataSource;
+import com.visitas.auth.model.AppSetting;
+import com.visitas.auth.service.AppSettingService;
+import jakarta.activation.DataHandler;
+import jakarta.activation.DataSource;
+import jakarta.mail.*;
+import jakarta.mail.internet.*;
+import jakarta.mail.util.ByteArrayDataSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import java.util.Properties;
 
+
+@Service
 public class EmailSender {
 
-    public static void sendEmail(String to, String subject, String body, byte[] pdfBytes) throws Exception {
+    @Autowired
+    private AppSettingService appSettingService;
 
-        String host = "mail.jesusnazarenodelasalvacion.com";
-        String port = "587";
-        String username = "inscripciones@jesusnazarenodelasalvacion.com";
-        String password = "Inscripciones2023";
-        boolean useTls = true;
+    public void sendEmail(String to, String subject, String body, byte[] pdfBytes) throws Exception {
+
+        String host = appSettingService.getSettingByKey(AppSettingKeys.EMAIL_HOST)
+                .map(AppSetting::getSettingValue)
+                .orElseThrow(() -> new IllegalStateException("Configuración de EMAIL_HOST no encontrada."));
+
+        int port = Integer.parseInt(appSettingService.getSettingByKey(AppSettingKeys.EMAIL_PORT)
+                .map(AppSetting::getSettingValue)
+                .orElseThrow(() -> new IllegalStateException("Configuración de EMAIL_PORT no encontrada.")));
+
+        String username = appSettingService.getSettingByKey(AppSettingKeys.EMAIL_USERNAME)
+                .map(AppSetting::getSettingValue)
+                .orElseThrow(() -> new IllegalStateException("Configuración de EMAIL_USERNAME no encontrada."));
+
+        String password = appSettingService.getSettingByKey(AppSettingKeys.EMAIL_PASSWORD)
+                .map(AppSetting::getSettingValue)
+                .orElseThrow(() -> new IllegalStateException("Configuración de EMAIL_PASSWORD no encontrada."));
+
+        boolean useTls = Boolean.parseBoolean(appSettingService.getSettingByKey(AppSettingKeys.EMAIL_USE_TLS)
+                .map(AppSetting::getSettingValue)
+                .orElse("true"));
 
         Properties props = new Properties();
         props.put("mail.smtp.host", host);
-        props.put("mail.smtp.port", port);
+        props.put("mail.smtp.port", String.valueOf(port));
         props.put("mail.smtp.auth", "true");
         if (useTls) {
             props.put("mail.smtp.starttls.enable", "true");
+            props.put("mail.smtp.ssl.protocols", "TLSv1.2");
         }
 
-        Session session = Session.getInstance(props, new javax.mail.Authenticator() {
+        Session session = Session.getInstance(props, new Authenticator() {
             protected PasswordAuthentication getPasswordAuthentication() {
                 return new PasswordAuthentication(username, password);
             }
