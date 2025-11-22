@@ -41,6 +41,9 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/admin/settings/public/key/GOOGLE_MAPS_API_KEY").permitAll()
+                        .requestMatchers("/clients/**").hasRole("ADMIN")
+                        .requestMatchers("/users/**").hasRole("ADMIN")
                         // Puedes seguir restringiendo con roles en el futuro
                         //.requestMatchers("/clients/**").hasRole("ADMIN")
                         //.anyRequest().authenticated()
@@ -56,7 +59,13 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(List.of("http://localhost","http://localhost:5500","http://127.0.0.1","https://jesusnazarenodelasalvacion.com"));
+        config.setAllowedOrigins(List.of("http://localhost",
+                "http://localhost:5500",
+                "http://127.0.0.1",
+                "https://jesusnazarenodelasalvacion.com",
+                "http://jesusnazarenodelasalvacion.com",
+                "https://proyecto-umg-2.s3.us-east-1.amazonaws.com",
+                "http://proyecto-umg-2.s3.us-east-1.amazonaws.com"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

@@ -5,6 +5,7 @@ import com.visitas.auth.repository.VisitRepository;
 import com.visitas.auth.service.NotificationService;
 import com.visitas.auth.util.ReportGenerator;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -54,17 +56,29 @@ public class VisitController {
             return ResponseEntity.notFound().build();
         }
         Visit visit = opt.get();
-        visit.setClientId(visitDetails.getClientId());
-        visit.setTechnicianId(visitDetails.getTechnicianId());
-        visit.setSupervisorId(visitDetails.getSupervisorId());
-        visit.setScheduledAt(visitDetails.getScheduledAt());
-        visit.setCheckIn(visitDetails.getCheckIn());
-        visit.setCheckInLat(visitDetails.getCheckInLat());
-        visit.setCheckInLng(visitDetails.getCheckInLng());
-        visit.setCheckOut(visitDetails.getCheckOut());
-        visit.setCheckOutLat(visitDetails.getCheckOutLat());
-        visit.setCheckOutLng(visitDetails.getCheckOutLng());
-        visit.setNotes(visitDetails.getNotes());
+
+        if (visitDetails.getClient() != null) {
+            visit.setClient(visitDetails.getClient());
+        }
+
+        if (visitDetails.getTechnician() != null) {
+            visit.setTechnician(visitDetails.getTechnician());
+        }
+
+        if (visitDetails.getSupervisor() != null) {
+            visit.setSupervisor(visitDetails.getSupervisor());
+        }
+
+        // Campos directos de la visita (no relaciones)
+        if (visitDetails.getScheduledAt() != null) visit.setScheduledAt(visitDetails.getScheduledAt());
+        if (visitDetails.getCheckIn() != null) visit.setCheckIn(visitDetails.getCheckIn());
+        if (visitDetails.getCheckInLat() != null) visit.setCheckInLat(visitDetails.getCheckInLat());
+        if (visitDetails.getCheckInLng() != null) visit.setCheckInLng(visitDetails.getCheckInLng());
+        if (visitDetails.getCheckOut() != null) visit.setCheckOut(visitDetails.getCheckOut());
+        if (visitDetails.getCheckOutLat() != null) visit.setCheckOutLat(visitDetails.getCheckOutLat());
+        if (visitDetails.getCheckOutLng() != null) visit.setCheckOutLng(visitDetails.getCheckOutLng());
+        if (visitDetails.getNotes() != null) visit.setNotes(visitDetails.getNotes());
+
         visitRepository.save(visit);
         return ResponseEntity.ok(visit);
     }
@@ -89,7 +103,7 @@ public class VisitController {
     }
 
     @PostMapping("/{id}/finish")
-    public ResponseEntity<String> finalizarVisita(@PathVariable Long id, @RequestBody Map<String, String> body) {
+    public ResponseEntity<Map<String, String>> finalizarVisita(@PathVariable Long id, @RequestBody Map<String, String> body) {
         String emailCliente = body.get("email");
         Optional<Visit> optVisit = visitRepository.findById(id);
         if (optVisit.isEmpty()) {
@@ -101,20 +115,20 @@ public class VisitController {
         visit.setNotes("Visita finalizada y reporte generado");
         visitRepository.save(visit);
 
+        Map<String, String> response = new HashMap<>();
         try {
-            // Generar PDF del reporte
             byte[] pdfBytes = ReportGenerator.generateVisitReport(visit);
-
-            // Guardar registro y enviar notificación (NotificationService maneja estado)
             String asunto = "Informe de su visita";
             String cuerpo = "Estimado cliente,\n\nAdjunto encontrará el informe de su visita.";
             notificationService.sendNotification(visit.getId(), emailCliente, asunto, cuerpo, pdfBytes);
+
+            response.put("message", "Visita finalizada y reporte enviado correctamente.");
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).body("Error al generar o enviar el reporte");
+            response.put("error", "Error al generar o enviar el reporte: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-
-        return ResponseEntity.ok("Visita finalizada y reporte enviado");
     }
 
     @GetMapping("/{id}/report")

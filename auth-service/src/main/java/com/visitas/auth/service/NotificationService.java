@@ -2,7 +2,8 @@ package com.visitas.auth.service;
 
 import com.visitas.auth.model.Notification;
 import com.visitas.auth.repository.NotificationRepository;
-import com.visitas.auth.util.EmailSender;
+import com.visitas.auth.util.EmailSender; // Importa el EmailSender
+import org.springframework.beans.factory.annotation.Autowired; // Necesario para @Autowired
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -10,9 +11,12 @@ import java.time.LocalDateTime;
 @Service
 public class NotificationService {
     private final NotificationRepository notificationRepository;
+    private final EmailSender emailSender;
 
-    public NotificationService(NotificationRepository notificationRepository) {
+    @Autowired
+    public NotificationService(NotificationRepository notificationRepository, EmailSender emailSender) {
         this.notificationRepository = notificationRepository;
+        this.emailSender = emailSender;
     }
 
     public void sendNotification(Long visitId, String recipient, String subject, String body, byte[] pdfBytes) {
@@ -26,7 +30,7 @@ public class NotificationService {
         notificationRepository.save(n);
 
         try {
-            EmailSender.sendEmail(recipient, subject, body, pdfBytes);
+            emailSender.sendEmail(recipient, subject, body, pdfBytes);
             n.setStatus("SENT");
             n.setError(null);
         } catch (Exception ex) {

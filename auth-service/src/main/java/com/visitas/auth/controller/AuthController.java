@@ -17,8 +17,8 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/auth")
-@CrossOrigin(origins = "http://localhost")
-//@CrossOrigin(origins = "https://jesusnazarenodelasalvacion.com")
+//@CrossOrigin(origins = "http://localhost")
+@CrossOrigin(origins = "https://jesusnazarenodelasalvacion.com")
 public class AuthController {
     @Autowired
     private AuthenticationManager authenticationManager;
